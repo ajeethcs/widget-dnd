@@ -1,0 +1,132 @@
+import React, { useRef } from "react";
+import { Rnd } from "react-rnd";
+import { Card } from "antd"; // Ant Design Card
+import Ruler from "@scena/react-ruler";
+import Box from "./Box";
+import TableComponent from "./TableComponent";
+import FormComponent from "./FormComponent";
+
+const App = () => {
+  const horizontalRuler = useRef(null);
+  const verticalRuler = useRef(null);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100vw",
+        height: "100vh",
+        background: "#f0f0f0",
+      }}
+    >
+      {/* Scrollable Main Content Area */}
+      <div
+        style={{
+          position: "relative",
+          width: "90%",
+          height: "90%",
+          background: "#ffffff",
+          border: "2px solid black",
+          overflow: "auto",
+          display: "grid",
+          gridTemplateColumns: "repeat(16, 50px)",
+          gridTemplateRows: "repeat(10, 50px)",
+          backgroundSize: "50px 50px",
+          backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px)",
+        }}
+      >
+        {/* Horizontal Ruler */}
+        <Ruler
+          ref={horizontalRuler}
+          type="horizontal"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: 20,
+            background: "#ddd",
+            zIndex: 1,
+          }}
+          unit={50}
+        />
+
+        {/* Vertical Ruler */}
+        <Ruler
+          ref={verticalRuler}
+          type="vertical"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            height: "100%",
+            width: 20,
+            background: "#ddd",
+            zIndex: 1,
+          }}
+          unit={50}
+        />
+
+        {/* Draggable & Resizable Components with Snapping */}
+        {/* <Rnd
+          default={{
+            x: 100,
+            y: 100,
+            width: 250,
+            height: 150,
+          }}
+          minWidth={150}
+          minHeight={100}
+          bounds="parent"
+          dragGrid={[50, 50]}  
+          resizeGrid={[50, 50]}         
+        >
+          <Card title="Box" style={{ width: "100%", height: "100%",background: "#f4f4f4" }}>
+            <Box />
+          </Card>
+        </Rnd> */}
+
+        <Rnd
+          default={{
+            x: 300,
+            y: 250,
+            width: 300,
+            height: 200,
+          }}
+          minWidth={200}
+          minHeight={150}
+          bounds="parent"
+          dragGrid={[50, 50]} 
+          resizeGrid={[50, 50]}
+        >
+          <Card title="Table" style={{ width: "100%", height: "100%", overflow: "auto",background: "#f4f4f4" }}>
+            <TableComponent />
+          </Card>
+           
+        </Rnd>
+
+        {/* <Rnd
+          default={{
+            x: 500,
+            y: 350,
+            width: 350,
+            height: 250,
+          }}
+          minWidth={250}
+          minHeight={200}
+          bounds="parent"
+          dragGrid={[50, 50]} 
+          resizeGrid={[50, 50]}
+        >
+          <Card title="Form" style={{ width: "100%", height: "100%", overflow: "auto",background: "#f4f4f4" }}>
+            <FormComponent />
+          </Card>
+        </Rnd> */}
+      </div>
+    </div>
+  );
+};
+
+export default App;

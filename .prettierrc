@@ -1,0 +1,11 @@
+{     
+    "printWidth": 200,
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": false,
+    "placement": "ownLine",
+    "leading": true,
+    "trailing": false,
+    "useTabs": false,
+    "embeddedLanguageFormatting": "auto"
+}
