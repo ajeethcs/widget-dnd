@@ -2,8 +2,8 @@ import React, { useRef } from "react";
 import { Rnd } from "react-rnd";
 import { Card } from "antd";
 import Ruler from "@scena/react-ruler";
-import TableComponent from "./TableComponent";
-import Navbar from "./components/NavBar";
+import TableComponent from "./components/Table/TableComponent";
+import Navbar from "./components/NavBar/NavBar";
 
 const Dashboard1 = () => {
   const horizontalRuler = useRef(null);
