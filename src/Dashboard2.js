@@ -1,13 +1,39 @@
-import React, { useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { Card } from "antd";
 import Ruler from "@scena/react-ruler";
-import TableComponent from "./components/Table/TableComponent";
-import Navbar from "./components/NavBar/NavBar";
+
+const parentStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "solid 2px #000",
+  background: "#f0f0f0",
+  position: "relative", // Needed for bounding the child
+  overflow: "hidden", // Prevent child overflow
+};
+
+const childStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "solid 1px #666",
+  background: "#ddd",
+  position: "absolute", // Needed for correct positioning
+};
 
 const Dashboard2 = () => {
   const horizontalRuler = useRef(null);
   const verticalRuler = useRef(null);
+
+  const [parent, setParent] = useState({ width: 300, height: 300, x: 50, y: 50 });
+  const [child, setChild] = useState({ width: 100, height: 100, x: 10, y: 10 });
+
+  // Update rulers when the parent resizes
+  useEffect(() => {
+    if (horizontalRuler.current) horizontalRuler.current.resize();
+    if (verticalRuler.current) verticalRuler.current.resize();
+  }, [parent.width, parent.height]);
 
   return (
     <div
@@ -42,7 +68,7 @@ const Dashboard2 = () => {
             width: "calc(100% - 20px)",
             height: 20,
             background: "#ddd",
-            zIndex: 1,
+            zIndex: 10,
           }}
           unit={50}
         />
@@ -58,69 +84,53 @@ const Dashboard2 = () => {
             height: "calc(100% - 20px)",
             width: 20,
             background: "#ddd",
-            zIndex: 1,
+            zIndex: 10,
           }}
           unit={50}
         />
 
-        {/* Draggable Components */}
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "calc(100% - 40px)",
-            display: "grid",
-            gridTemplateColumns: "repeat(32, 50px)",
-            gridTemplateRows: "repeat(20, 50px)",
-            backgroundSize: "50px 50px",
-            backgroundImage:
-              "radial-gradient(circle, rgba(18, 129, 83, 0.3) 2px, transparent 2px)",
-            backgroundPosition: "0px 0px",
-            overflow: "auto",
+        {/* Parent Rnd (Movable and Resizable) */}
+        <Rnd
+          style={parentStyle}
+          size={{ width: parent.width, height: parent.height }}
+          position={{ x: parent.x, y: parent.y }}
+          onDragStop={(e, d) => setParent((prev) => ({ ...prev, x: d.x, y: d.y }))}
+          onResizeStop={(e, direction, ref, delta, position) => {
+            setParent({
+              width: parseInt(ref.style.width),
+              height: parseInt(ref.style.height),
+              ...position,
+            });
           }}
         >
+          {/* Child Rnd (Movable Inside Parent) */}
           <Rnd
-            default={{
-              x: 100,
-              y: 100,
-              width: 300,
-              height: 200,
+            style={childStyle}
+            size={{ width: child.width, height: child.height }}
+            position={{ x: child.x, y: child.y }}
+            bounds="parent" // Restrict child movement inside parent
+            dragAxis="both" // Allow dragging in both directions
+            enableResizing={true} // Allow resizing
+            onMouseDown={(e) => {
+              e.stopPropagation(); // Stop event bubbling
             }}
-            minWidth={200}
-            minHeight={150}
-            bounds="parent"
-            dragGrid={[50, 50]}
-            resizeGrid={[50, 50]}
-          >
-            <Card
-              title="Table"
-              style={{
-                width: "100%",
-                height: "100%",
-                overflow: "auto",
-                background: "#f4f4f4",
-              }}
-            >
-              <TableComponent />
-            </Card>
-          </Rnd>
-
-          <Rnd
-            default={{
-              x: 500,
-              y: 100,
-              width: 300,
-              height: 200,
+            onDragStart={(e) => {
+              e.stopPropagation(); // Ensure drag does not trigger parent move
             }}
-            minWidth={200}
-            minHeight={150}
-            bounds="parent"
-            dragGrid={[50, 50]}
-            resizeGrid={[50, 50]}
+            onDragStop={(e, d) => {
+              setChild((prev) => ({ ...prev, x: d.x, y: d.y }));
+            }}
+            onResizeStop={(e, direction, ref, delta, position) => {
+              setChild({
+                width: parseInt(ref.style.width),
+                height: parseInt(ref.style.height),
+                ...position,
+              });
+            }}
           >
-            <Navbar />
+            Child Rnd
           </Rnd>
-        </div>
+        </Rnd>
       </Card>
     </div>
   );
