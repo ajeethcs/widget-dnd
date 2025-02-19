@@ -2,9 +2,9 @@ import React, { useRef } from "react";
 import { Rnd } from "react-rnd";
 import { Card } from "antd"; // Ant Design Card
 import Ruler from "@scena/react-ruler";
-import TableComponent from "./TableComponent";
-import BasicWidget from "./BasicWidget";
-import Navbar from "./components/NavBar";
+import TableComponent from "./components/Table/TableComponent";
+// import BasicWidget from "./BasicWidget";
+import Navbar from "./components/NavBar/NavBar";
 
 const App = () => {
   const horizontalRuler = useRef(null);
