@@ -23,9 +23,9 @@ const data = [
 
 const TableComponent = () => {
   return (
-    <div style={{ background: "#fff", padding: "10px", borderRadius: "8px", boxShadow: "0px 2px 10px rgba(0,0,0,0.1)" }}>
-      <Table columns={columns} dataSource={data} pagination={{ pageSize: 5 }} />
-    </div>
+    // <div style={{ background: "#fff", padding: "10px", borderRadius: "8px", boxShadow: "0px 2px 10px rgba(0,0,0,0.1)", zIndex: 1 }}>
+    <Table style={{ width: "100%", height: "100%" }} columns={columns} dataSource={data} />
+    // </div>
   );
 };
 
