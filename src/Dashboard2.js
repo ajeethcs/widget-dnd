@@ -1,26 +1,33 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Rnd } from "react-rnd";
 import { Card } from "antd";
 import Ruler from "@scena/react-ruler";
 
-const parentStyle = {
+const GRID_SIZE = 20;
+
+const parentBaseStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  border: "solid 2px #000",
-  background: "#f0f0f0",
-  position: "relative", // Needed for bounding the child
-  overflow: "hidden", // Prevent child overflow
+  border: "solid 1px #d3d3d3",
+  borderRadius: "5px",
+  background: "#fcfcfc",
+  position: "absolute",
+  overflow: "hidden",
+  transition: "background 0.2s, box-shadow 0.2s, border 0.2s",
 };
 
-const childStyle = {
+const childBaseStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   border: "solid 1px #666",
-  background: "#ddd",
-  position: "absolute", // Needed for correct positioning
+  background: "#eee",
+  position: "absolute",
+  transition: "background 0.2s, box-shadow 0.2s, border 0.2s",
 };
+
+const snapToGrid = (value) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
 const Dashboard2 = () => {
   const horizontalRuler = useRef(null);
@@ -28,12 +35,41 @@ const Dashboard2 = () => {
 
   const [parent, setParent] = useState({ width: 300, height: 300, x: 50, y: 50 });
   const [child, setChild] = useState({ width: 100, height: 100, x: 10, y: 10 });
+  const [isDraggingParent, setIsDraggingParent] = useState(false);
+  const [isDraggingChild, setIsDraggingChild] = useState(false);
 
-  // Update rulers when the parent resizes
   useEffect(() => {
     if (horizontalRuler.current) horizontalRuler.current.resize();
     if (verticalRuler.current) verticalRuler.current.resize();
   }, [parent.width, parent.height]);
+
+  const onParentDragStart = () => setIsDraggingParent(true);
+  const onParentDragStop = useCallback((e, d) => {
+    setIsDraggingParent(false);
+    setParent((prev) => ({ ...prev, x: snapToGrid(d.x), y: snapToGrid(d.y) }));
+  }, []);
+
+  const onParentResizeStop = useCallback((e, direction, ref, delta, position) => {
+    setParent({
+      width: snapToGrid(parseInt(ref.style.width, 10)),
+      height: snapToGrid(parseInt(ref.style.height, 10)),
+      ...position,
+    });
+  }, []);
+
+  const onChildDragStart = () => setIsDraggingChild(true);
+  const onChildDragStop = useCallback((e, d) => {
+    setIsDraggingChild(false);
+    setChild((prev) => ({ ...prev, x: snapToGrid(d.x), y: snapToGrid(d.y) }));
+  }, []);
+
+  const onChildResizeStop = useCallback((e, direction, ref, delta, position) => {
+    setChild({
+      width: snapToGrid(parseInt(ref.style.width, 10)),
+      height: snapToGrid(parseInt(ref.style.height, 10)),
+      ...position,
+    });
+  }, []);
 
   return (
     <div
@@ -44,14 +80,30 @@ const Dashboard2 = () => {
         width: "100vw",
         height: "100vh",
         background: "#f0f0f0",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Grid Background */}
+      <div
+        style={{
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+          backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+          // backgroundImage: "linear-gradient(to right, #ddd 1px, transparent 1px), linear-gradient(to bottom, #ddd 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, #bbb 1px, transparent 1px)", // Dot grid pattern,
+          zIndex: 0,
+        }}
+      />
+
       <Card
         title="Dashboard"
         style={{
           width: "90%",
           height: "90%",
-          background: "#ffffff",
+          // background: "#ffffff",
+          backgroundColor: "transparent",
           border: "2px solid black",
           overflow: "hidden",
           position: "relative",
@@ -91,45 +143,44 @@ const Dashboard2 = () => {
 
         {/* Parent Rnd (Movable and Resizable) */}
         <Rnd
-          style={parentStyle}
+          style={{
+            ...parentBaseStyle,
+            background: isDraggingParent
+              ? "#4f86ff67" // Keep blue when dragging parent
+              : "white", // Keep white when idle
+            mixBlendMode: isDraggingChild ? "multiply" : "normal", // Show grid when dragging child
+          }}
           size={{ width: parent.width, height: parent.height }}
           position={{ x: parent.x, y: parent.y }}
-          onDragStop={(e, d) => setParent((prev) => ({ ...prev, x: d.x, y: d.y }))}
-          onResizeStop={(e, direction, ref, delta, position) => {
-            setParent({
-              width: parseInt(ref.style.width),
-              height: parseInt(ref.style.height),
-              ...position,
-            });
-          }}
+          onDragStart={onParentDragStart}
+          onDragStop={onParentDragStop}
+          onResizeStop={onParentResizeStop}
         >
-          {/* Child Rnd (Movable Inside Parent) */}
-          <Rnd
-            style={childStyle}
-            size={{ width: child.width, height: child.height }}
-            position={{ x: child.x, y: child.y }}
-            bounds="parent" // Restrict child movement inside parent
-            dragAxis="both" // Allow dragging in both directions
-            enableResizing={true} // Allow resizing
-            onMouseDown={(e) => {
-              e.stopPropagation(); // Stop event bubbling
-            }}
-            onDragStart={(e) => {
-              e.stopPropagation(); // Ensure drag does not trigger parent move
-            }}
-            onDragStop={(e, d) => {
-              setChild((prev) => ({ ...prev, x: d.x, y: d.y }));
-            }}
-            onResizeStop={(e, direction, ref, delta, position) => {
-              setChild({
-                width: parseInt(ref.style.width),
-                height: parseInt(ref.style.height),
-                ...position,
-              });
-            }}
-          >
-            Child Rnd
-          </Rnd>
+          {!isDraggingParent && (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {/* Parent Rnd */}
+              {/* Child Rnd (Movable Inside Parent) */}
+              <Rnd
+                style={{
+                  ...childBaseStyle,
+                  background: isDraggingChild ? "#4f86ff67" : childBaseStyle.background,
+                  // border: isDraggingChild ? "1px solid #ffff" : childBaseStyle.border,
+                  // boxShadow: isDraggingChild ? "0px 0px 10px rgba(143, 143, 255, 0.5)" : "none",
+                }}
+                size={{ width: child.width, height: child.height }}
+                position={{ x: child.x, y: child.y }}
+                bounds="parent"
+                dragAxis="both"
+                enableResizing={true}
+                onMouseDown={(e) => e.stopPropagation()}
+                onDragStart={onChildDragStart}
+                onDragStop={onChildDragStop}
+                onResizeStop={onChildResizeStop}
+              >
+                {!isDraggingChild && "Child Rnd"}
+              </Rnd>
+            </div>
+          )}
         </Rnd>
       </Card>
     </div>
