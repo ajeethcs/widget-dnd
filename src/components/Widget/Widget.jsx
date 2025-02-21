@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import { Rnd } from "react-rnd";
 import { useWidgetContext } from "../../Context/AppContext";
 import TableComponent from "../Table/TableComponent";
-import Navbar from "../NavBar/NavBar";
 // import { useWidgetContext } from "../context/WidgetContext";
 
 const Widget = ({ containerId, widget }) => {
-  const { updateWidgetPosition, updateWidgetSize, startDragging } = useWidgetContext();
+  const { updateWidgetPosition, updateWidgetSize, detectNewContainer } = useWidgetContext();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -20,7 +19,10 @@ const Widget = ({ containerId, widget }) => {
       }}
       onDragStop={(e, d) => {
         setIsDragging(false);
+        const newPosition = { x: d.x, y: d.y };
+        const widgetSize = { height: widget.height, width: widget.width };
         updateWidgetPosition(containerId, widget.widgetId, { x: d.x, y: d.y });
+        detectNewContainer(widget.widgetId, newPosition, widgetSize);
       }}
       onResizeStart={() => {
         setIsResizing(true);
@@ -34,7 +36,6 @@ const Widget = ({ containerId, widget }) => {
       }}
       //   bounds="parent"
       style={{
-        // background: isDragging ? "#a4c4e6d1" : widget.type === "A" ? "#ff6961" : widget.type === "B" ? "#77dd77" : "#84b6f4",
         background: isDragging || isResizing ? "#4f86ff67" : "#c5c5c5",
         mixBlendMode: isDragging || isResizing ? "multiply" : "normal",
         color: "#fff",
@@ -43,9 +44,11 @@ const Widget = ({ containerId, widget }) => {
         justifyContent: "center",
         borderRadius: "5px",
         overflow: "hidden",
+        border: "1px solid lightgray",
       }}
     >
-      <TableComponent />
+      {widget.widgetId}
+      {/* <TableComponent /> */}
     </Rnd>
   );
 };

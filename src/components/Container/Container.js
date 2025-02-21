@@ -16,6 +16,7 @@ const Container = ({ container }) => {
       onMouseDown={(e) => e.stopPropagation()} // Prevent event bubbling
       position={{ x: container.position.x, y: container.position.y }}
       onDragStart={() => setIsDragging(true)}
+      //   enableResizing={false}
       onDragStop={(e, d) => {
         updateContainerPosition(container.containerId, { x: d.x, y: d.y });
         setIsDragging(false);
@@ -28,7 +29,7 @@ const Container = ({ container }) => {
           height: ref.offsetHeight,
         });
       }}
-      //   bounds="parent"
+      bounds="window"
       style={{
         // background: isDragging ? "#a4c4e6d1" : "#fff",
         backgroundColor: isDragging || isResizing ? "#4f86ff67" : "transparent",
@@ -36,7 +37,7 @@ const Container = ({ container }) => {
         border: "2px solid lightgray",
         position: "absolute",
         borderRadius: "8px",
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       {container.widgets.map((widget) => (
