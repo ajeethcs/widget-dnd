@@ -7,8 +7,11 @@ const Navbar = () => {
       justifyContent: "space-between",
       alignItems: "center",
       padding: "10px 20px",
-      backgroundColor: "#333",
+      // backgroundColor: "#333",
+      backgroundColor: "#54a2fc",
       color: "white",
+      width: "100%",
+      height: "100%",
     },
     logo: {
       fontSize: "1.5rem",

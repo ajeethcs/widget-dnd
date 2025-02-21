@@ -1,6 +1,6 @@
 import React from "react";
 import { useWidgetContext } from "../../Context/AppContext";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, TableOutlined, TabletOutlined } from "@ant-design/icons";
 // import { useWidgetContext } from "../../Context/AppContext";
 
 const Panel = () => {
@@ -25,12 +25,23 @@ const Panel = () => {
         Panel
       </div>
       <h4>Widgets</h4>
-      {["widget1", "widget2", "widget3"].map((widget) => (
+      {["table", "navBar", "widget3"].map((widget) => (
         <div
           key={widget}
           draggable
           onDragStart={(e) => handleDragStart(e, widget)}
-          style={{ background: "#91dcff86", border: "1px dashed gray", borderRadius: "10px", padding: "10px", marginBottom: "8px", cursor: "grab" }}
+          style={{
+            height: "50px",
+            background: "#c7c7c785",
+            border: "0px dashed gray",
+            borderRadius: "10px",
+            padding: "10px",
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "8px",
+            justifyContent: "center",
+            cursor: "grab",
+          }}
         >
           {widget}
         </div>

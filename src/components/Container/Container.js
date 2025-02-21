@@ -4,6 +4,8 @@ import { Rnd } from "react-rnd";
 // import Widget from "./Widget";
 import { useWidgetContext } from "../../Context/AppContext";
 import Widget from "../Widget/Widget";
+import { Button } from "antd";
+import { CloseCircleOutlined } from "@ant-design/icons";
 
 const Container = ({ container }) => {
   const { updateContainerPosition, updateContainerSize } = useWidgetContext();

@@ -39,7 +39,7 @@ export const WidgetProvider = ({ children }) => {
   const addWidget = (widgetType, position) => {
     if (!data) return;
     setData((prevData) => {
-      const newWidget = { widgetId: nanoid(), type: "A", position: { x: 20, y: 20 }, width: 250, height: 100 };
+      const newWidget = { widgetId: nanoid(), type: widgetType, position: { x: 20, y: 20 }, width: 250, height: 100 };
       return {
         ...prevData,
         containers: prevData.containers.map((container) => {

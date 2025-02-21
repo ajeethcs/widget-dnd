@@ -2,12 +2,23 @@ import React, { useState } from "react";
 import { Rnd } from "react-rnd";
 import { useWidgetContext } from "../../Context/AppContext";
 import TableComponent from "../Table/TableComponent";
+import Navbar from "../NavBar/NavBar";
 // import { useWidgetContext } from "../context/WidgetContext";
 
 const Widget = ({ containerId, widget }) => {
   const { updateWidgetPosition, updateWidgetSize, detectNewContainer, startDragging } = useWidgetContext();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+
+  const renderWidget = (widgetType) => {
+    debugger;
+    if (widgetType === "table") {
+      return <TableComponent />;
+    }
+    if (widgetType === "navBar") {
+      return <Navbar />;
+    }
+  };
 
   return (
     <Rnd
@@ -40,9 +51,9 @@ const Widget = ({ containerId, widget }) => {
           position
         );
       }}
-      //   bounds="parent"
       style={{
         background: isDragging || isResizing ? "#4f86ff67" : "#91dcff86",
+        backgroundColor: isDragging || isResizing ? "#4f86ff67" : "transparent",
         mixBlendMode: isDragging || isResizing ? "multiply" : "normal",
         color: "#fff",
         display: "flex",
@@ -54,8 +65,7 @@ const Widget = ({ containerId, widget }) => {
         position: "absolute",
       }}
     >
-      Widget- {widget.widgetId}
-      {/* <TableComponent /> */}
+      {renderWidget(widget.type)}
     </Rnd>
   );
 };
