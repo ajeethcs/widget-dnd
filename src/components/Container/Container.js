@@ -23,13 +23,18 @@ const Container = ({ container }) => {
       }}
       onResizeStart={() => setIsResizing(true)}
       onResizeStop={(e, direction, ref, delta, position) => {
+        // debugger;
         setIsResizing(false);
-        updateContainerSize(container.containerId, {
-          width: ref.offsetWidth,
-          height: ref.offsetHeight,
-        });
+        updateContainerSize(
+          container.containerId,
+          {
+            width: ref.offsetWidth,
+            height: ref.offsetHeight,
+          },
+          delta
+        );
       }}
-      bounds="window"
+      bounds="parent"
       style={{
         // background: isDragging ? "#a4c4e6d1" : "#fff",
         backgroundColor: isDragging || isResizing ? "#4f86ff67" : "transparent",
@@ -40,6 +45,21 @@ const Container = ({ container }) => {
         overflow: "visible",
       }}
     >
+      <div
+        style={{
+          position: "absolute",
+          top: "-12px",
+          left: "10px",
+          background: "#fc6e6e",
+          color: "white",
+          fontSize: "12px",
+          padding: "2px 6px",
+          borderRadius: "4px",
+          zIndex: 10,
+        }}
+      >
+        Container-{container.containerId}
+      </div>
       {container.widgets.map((widget) => (
         <Widget key={widget.widgetId} containerId={container.containerId} widget={widget} />
       ))}
