@@ -1,19 +1,24 @@
 import React, { useState } from "react";
 import { Rnd } from "react-rnd";
-// import { useWidgetContext } from "../context/WidgetContext";
-// import Widget from "./Widget";
 import { useWidgetContext } from "../../Context/AppContext";
 import Widget from "../Widget/Widget";
-import { Button } from "antd";
-import { CloseCircleOutlined } from "@ant-design/icons";
+import DraggableButton from "../Button/Button";
+import DraggbleTab from "../Tabs/DraggableTab";
+import TextBox from "../TextBox/TextBox";
+import Dropdown from "../Dropdown/Dropdown";
+import { Button, Popconfirm, Space } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 const Container = ({ container }) => {
-  const { updateContainerPosition, updateContainerSize } = useWidgetContext();
+  const { updateContainerPosition, updateContainerSize, removeWidget, removeContainer } = useWidgetContext();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [isHover, setIsHover] = useState(false);
 
   return (
     <Rnd
+      onMouseEnter={() => setIsHover(true)}
+      onMouseLeave={() => setIsHover(false)}
       size={{ width: container.width, height: container.height }}
       onMouseDown={(e) => e.stopPropagation()} // Prevent event bubbling
       position={{ x: container.position.x, y: container.position.y }}
@@ -25,7 +30,6 @@ const Container = ({ container }) => {
       }}
       onResizeStart={() => setIsResizing(true)}
       onResizeStop={(e, direction, ref, delta, position) => {
-        // debugger;
         setIsResizing(false);
         updateContainerSize(
           container.containerId,
@@ -33,12 +37,12 @@ const Container = ({ container }) => {
             width: ref.offsetWidth,
             height: ref.offsetHeight,
           },
-          delta
+          delta,
+          position
         );
       }}
       bounds="parent"
       style={{
-        // background: isDragging ? "#a4c4e6d1" : "#fff",
         backgroundColor: isDragging || isResizing ? "#4f86ff67" : "transparent",
         mixBlendMode: isDragging || isResizing ? "multiply" : "normal",
         border: "2px solid lightgray",
@@ -47,21 +51,38 @@ const Container = ({ container }) => {
         overflow: "visible",
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          top: "-12px",
-          left: "10px",
-          background: "#fc6e6e",
-          color: "white",
-          fontSize: "12px",
-          padding: "2px 6px",
-          borderRadius: "4px",
-          zIndex: 10,
-        }}
-      >
-        Container-{container.containerId}
-      </div>
+      {isHover && (
+        <div
+          style={{
+            position: "absolute",
+            top: "-20px",
+            left: "5px",
+            background: "#fc6e6e",
+            color: "white",
+            fontSize: "12px",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            zIndex: 10,
+          }}
+        >
+          <Space>
+            <span>Container-{container.containerId}</span>
+            <DeleteOutlined style={{ fontSize: "16px", cursor: "pointer" }} onClick={() => removeContainer(container.containerId)} />
+          </Space>
+        </div>
+      )}
+      {container?.button?.map((button) => (
+        <DraggableButton key={button.id} button={button} containerId={container.containerId} />
+      ))}
+      {container?.tab?.map((item) => (
+        <DraggbleTab key={item.id} item={item} containerId={container.containerId} />
+      ))}
+      {container?.textBox?.map((item) => (
+        <TextBox key={item.id} item={item} containerId={container.containerId} />
+      ))}
+      {container?.dropdown?.map((item) => (
+        <Dropdown key={item.id} item={item} containerId={container.containerId} />
+      ))}
       {container.widgets.map((widget) => (
         <Widget key={widget.widgetId} containerId={container.containerId} widget={widget} />
       ))}

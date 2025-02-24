@@ -1,33 +1,9 @@
 import { nanoid } from "nanoid";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const WidgetContext = createContext();
 
 const gridSize = 20; // Define a grid size for snapping
-
-// const defaultData = {
-//   container: null,
-//   // containers: [
-//   //   {
-//   //     containerId: nanoid(),
-//   //     height: 500,
-//   //     width: 500,
-//   //     // position: { x: 50, y: 50 }, // Position relative to the canvas
-//   //     position: { x: 1, y: 50 }, // Position relative to the canvas
-//   //     widgets: [
-//   //       { widgetId: nanoid(), type: "A", position: { x: 1, y: 1 }, width: 250, height: 100 },
-//   //       { widgetId: nanoid(), type: "B", position: { x: 200, y: 100 }, width: 150, height: 100 },
-//   //     ],
-//   //   },
-//   //   {
-//   //     containerId: nanoid(),
-//   //     height: 500,
-//   //     width: 500,
-//   //     position: { x: 600, y: 200 },
-//   //     widgets: [{ widgetId: nanoid(), type: "C", position: { x: 20, y: 20 }, width: 150, height: 100 }],
-//   //   },
-//   // ],
-// };
 
 export const WidgetProvider = ({ children }) => {
   const [data, setData] = useState(null);
@@ -35,9 +11,34 @@ export const WidgetProvider = ({ children }) => {
 
   const snapToGrid = (value) => Math.round(value / gridSize) * gridSize;
 
+  useEffect(() => {
+    console.log("data changed=", data);
+  }, [data]);
+
   //***********************Add a widget or panel *************************************************/
+
   const addWidget = (widgetType, position) => {
     if (!data) return;
+    function getSize(type, container) {
+      debugger;
+      if (type === "navBar") {
+        return { width: container.width, height: 50 };
+      } else if (type === "table") {
+        return { width: container.width, height: 200 };
+      } else {
+        return { width: 100, height: 100 };
+      }
+    }
+    function getPosition(type, position) {
+      if (type === "navBar") {
+        return { x: 0, y: 0 };
+      } else if (type === "table") {
+        return { x: 0, y: position.y };
+      } else {
+        return position;
+      }
+    }
+
     setData((prevData) => {
       const newWidget = { widgetId: nanoid(), type: widgetType, position: { x: 20, y: 20 }, width: 250, height: 100 };
       return {
@@ -49,15 +50,42 @@ export const WidgetProvider = ({ children }) => {
             position.y >= container.position.y &&
             position.y <= container.position.y + container.height
           ) {
+            const relativePosition = getRelativePosition(position, container);
+            const updatedPosition = getPosition(widgetType, relativePosition);
+            const dimensions = getSize(widgetType, container);
             return {
               ...container,
-              widgets: [...container.widgets, newWidget],
+              widgets: [...container.widgets, { ...newWidget, position: updatedPosition ?? { x: 20, y: 20 }, width: dimensions.width, height: dimensions.height }],
             };
           }
           return container;
         }),
       };
     });
+  };
+
+  const removeContainer = (containerId) => {
+    const result = {
+      ...data,
+      containers: data.containers.filter((container) => container.containerId !== containerId),
+    };
+    setData(result);
+  };
+
+  const removeWidget = (widgetId, containerId) => {
+    //
+    const xxx = {
+      ...data,
+      containers: data.containers.map((container) =>
+        container.containerId === containerId
+          ? {
+              ...container,
+              widgets: container.widgets.filter((widget) => widget.widgetId !== widgetId),
+            }
+          : container
+      ),
+    };
+    debugger;
   };
 
   const addPanel = (position) => {
@@ -72,6 +100,7 @@ export const WidgetProvider = ({ children }) => {
             width: 500,
             height: 500,
             widgets: [],
+            buttons: [],
           },
         ],
       }));
@@ -84,10 +113,143 @@ export const WidgetProvider = ({ children }) => {
             width: 500,
             height: 500,
             widgets: [],
+            buttons: [],
           },
         ],
       });
     }
+  };
+
+  const addComponent = (widgetType, position, dimensions = { height: 32, width: 74 }) => {
+    // debugger;
+    if (!data) return;
+
+    function getSize(type, container) {
+      debugger;
+      if (type === "tab" || type === "navBar") {
+        return { width: container.width, height: container.height };
+      } else {
+        return { width: 100, height: 100 };
+      }
+    }
+    function getPosition(type, position) {
+      if (type === "tab" || type === "navBar") {
+        return { x: 0, y: 0 };
+      } else {
+        return position;
+      }
+    }
+
+    setData((prevData) => {
+      const newComponent = {
+        id: nanoid(),
+        type: widgetType,
+        position: { x: 20, y: 20 },
+        width: dimensions.width,
+        height: dimensions.height,
+      };
+
+      return {
+        ...prevData,
+        containers: prevData.containers.map((container) => {
+          if (
+            position.x >= container.position.x &&
+            position.x <= container.position.x + container.width &&
+            position.y >= container.position.y &&
+            position.y <= container.position.y + container.height
+          ) {
+            const relativePosition = getRelativePosition(position, container);
+            const updatedPosition = getPosition(widgetType, relativePosition);
+            const dimensions = getSize(widgetType, container);
+            return {
+              ...container,
+              [widgetType]: [...(container[widgetType] || []), { ...newComponent, position: updatedPosition ?? { x: 20, y: 20 }, width: dimensions.width, height: dimensions.height }], // Store in correct category
+            };
+          }
+          return container;
+        }),
+      };
+    });
+  };
+
+  const updateComponentPosition = (containerId, componentId, widgetType, newPosition) => {
+    setData((prev) => ({
+      ...prev,
+      containers: prev.containers.map((container) => {
+        if (container.containerId === containerId) {
+          return {
+            ...container,
+            [widgetType]: container[widgetType]?.map((component) => {
+              if (component.id === componentId) {
+                const { width, height } = component;
+                let newX = snapToGrid(newPosition.x);
+                let newY = snapToGrid(newPosition.y);
+
+                // ✅ Keep within container boundaries
+                newX = Math.max(0, Math.min(container.width - width, newX));
+                newY = Math.max(0, Math.min(container.height - height, newY));
+
+                // ✅ Check for collision
+                const isColliding = (x, y) => {
+                  return container[widgetType]?.some((otherComponent) => {
+                    if (otherComponent.id === componentId) return false;
+                    return (
+                      x < otherComponent.position.x + otherComponent.width &&
+                      x + width > otherComponent.position.x &&
+                      y < otherComponent.position.y + otherComponent.height &&
+                      y + height > otherComponent.position.y
+                    );
+                  });
+                };
+
+                // ❌ If collision detected, find nearest available space
+                if (isColliding(newX, newY)) {
+                  console.log("Collision detected! Finding new position...");
+
+                  let foundSpace = false;
+                  let attemptX = newX,
+                    attemptY = newY;
+                  let step = snapToGrid(10);
+                  let maxAttempts = (container.width * container.height) / (step * step);
+
+                  for (let i = 0; i < maxAttempts && !foundSpace; i++) {
+                    if (attemptX + width <= container.width && !isColliding(attemptX + step, attemptY)) {
+                      attemptX += step;
+                      foundSpace = true;
+                    } else if (attemptY + height <= container.height && !isColliding(attemptX, attemptY + step)) {
+                      attemptY += step;
+                      foundSpace = true;
+                    } else if (attemptX - step >= 0 && !isColliding(attemptX - step, attemptY)) {
+                      attemptX -= step;
+                      foundSpace = true;
+                    } else if (attemptY - step >= 0 && !isColliding(attemptX, attemptY - step)) {
+                      attemptY -= step;
+                      foundSpace = true;
+                    }
+                  }
+
+                  if (foundSpace) {
+                    newX = attemptX;
+                    newY = attemptY;
+                    console.log("New position found at:", newX, newY);
+                  } else {
+                    console.log("No available space found, keeping original position.");
+                    return component;
+                  }
+                }
+
+                return {
+                  ...component,
+                  position: { x: newX, y: newY },
+                };
+              }
+              return component;
+            }),
+          };
+        }
+        return container;
+      }),
+    }));
   };
 
   // ********************Dragging between containers******************************************
@@ -219,25 +381,67 @@ export const WidgetProvider = ({ children }) => {
       ),
     }));
   };
+  const updateContainerSize = (containerId, newSize, _, position) => {
+    debugger;
+    setData((prevData) => {
+      return {
+        ...prevData,
+        containers: prevData.containers.map((container) => {
+          if (container.containerId === containerId) {
+            const scaleX = newSize.width / container.width;
+            const scaleY = newSize.height / container.height;
 
-  const updateContainerSize = (containerId, newSize, delta) => {
-    setData((prev) => ({
-      ...prev,
-      containers: prev.containers.map((container) =>
-        container.containerId === containerId
-          ? {
+            const updatedWidgets = container.widgets.map((widget) => {
+              return {
+                ...widget,
+                width: snapToGrid(Math.max(10, Math.floor(widget.width * scaleX))),
+                height: snapToGrid(Math.max(10, Math.floor(widget.height * scaleY))),
+                position: {
+                  x: Math.floor(widget.position.x * scaleX),
+                  y: Math.floor(widget.position.y * scaleY),
+                },
+              };
+            });
+
+            const updatedtextBoxes = container?.textBox?.map((textBox) => {
+              return {
+                ...textBox,
+                width: snapToGrid(Math.max(10, Math.floor(textBox.width * scaleX))),
+                height: snapToGrid(Math.max(10, Math.floor(textBox.height * scaleY))),
+                position: {
+                  x: Math.floor(textBox.position.x * scaleX),
+                  y: Math.floor(textBox.position.y * scaleY),
+                },
+              };
+            });
+
+            const updatedButtons = container?.button?.map((button) => {
+              return {
+                ...button,
+                width: snapToGrid(Math.max(10, Math.floor(button.width * scaleX))),
+                height: snapToGrid(Math.max(10, Math.floor(button.height * scaleY))),
+                position: {
+                  x: Math.floor(button.position.x * scaleX),
+                  y: Math.floor(button.position.y * scaleY),
+                },
+              };
+            });
+
+            return {
               ...container,
               width: snapToGrid(newSize.width),
               height: snapToGrid(newSize.height),
-              widgets: container.widgets.map((widget) => ({ ...widget, width: widget.width + delta.width, height: widget.height + delta.height })),
-            }
-          : container
-      ),
-    }));
+              position: { x: snapToGrid(position.x), y: snapToGrid(position.y) },
+              widgets: updatedWidgets,
+              button: updatedButtons ?? [],
+              textBox: updatedtextBoxes ?? [],
+            };
+          }
+          return container;
+        }),
+      };
+    });
   };
-  useEffect(() => {
-    if (data?.containers) console.log("data changed", data?.containers);
-  }, [data]);
 
   const updateWidgetSize = (containerId, widgetId, newSize, position) => {
     setData((prev) => ({
@@ -291,28 +495,6 @@ export const WidgetProvider = ({ children }) => {
     }));
   };
 
-  // const updateWidgetSize = (containerId, widgetId, newSize) => {
-  //   setData((prev) => ({
-  //     ...prev,
-  //     containers: prev.containers.map((container) => {
-  //       if (container.containerId === containerId) {
-  //         return {
-  //           ...container,
-  //           widgets: container.widgets.map((widget) =>
-  //             widget.widgetId === widgetId
-  //               ? {
-  //                   ...widget,
-  //                   width: snapToGrid(newSize.width),
-  //                   height: snapToGrid(newSize.height),
-  //                 }
-  //               : widget
-  //           ),
-  //         };
-  //       }
-  //       return container;
-  //     }),
-  //   }));
-  // };
   const updateWidgetPosition = (containerId, widgetId, newPosition) => {
     setData((prev) => ({
       ...prev,
@@ -398,42 +580,119 @@ export const WidgetProvider = ({ children }) => {
     }));
   };
 
-  // const updateWidgetPosition = (containerId, widgetId, newPosition) => {
-  //   setData((prev) => ({
-  //     ...prev,
-  //     containers: prev.containers.map((container) => {
-  //       if (container.containerId === containerId) {
-  //         return {
-  //           ...container,
-  //           widgets: container.widgets.map((widget) => (widget.widgetId === widgetId ? { ...widget, position: { x: snapToGrid(newPosition.x), y: snapToGrid(newPosition.y) } } : widget)),
-  //         };
-  //       }
-  //       return container;
-  //     }),
-  //   }));
-  // };
+  const updateComponentSize = (containerId, componentId, widgetType, newSize, newPosition) => {
+    setData((prev) => ({
+      ...prev,
+      containers: prev.containers.map((container) => {
+        if (container.containerId === containerId) {
+          return {
+            ...container,
+            [widgetType]: container[widgetType]?.map((component) => {
+              if (component.id === componentId) {
+                let newWidth = snapToGrid(newSize.width);
+                let newHeight = snapToGrid(newSize.height);
+                let newX = snapToGrid(newPosition.x);
+                let newY = snapToGrid(newPosition.y);
 
-  return (
-    <WidgetContext.Provider
-      value={{
-        data,
-        startDragging,
-        draggingWidget,
-        setDraggingWidget,
-        detectNewContainer,
-        moveWidgetToContainer,
-        updateContainerPosition,
-        updateWidgetPosition,
-        updateContainerSize,
-        updateWidgetSize,
-        snapToGrid,
-        addWidget,
-        addPanel,
-      }}
-    >
-      {children}
-    </WidgetContext.Provider>
+                // ✅ Ensure size stays within container
+                newWidth = Math.max(20, Math.min(container.width - newX, newWidth));
+                newHeight = Math.max(20, Math.min(container.height - newY, newHeight));
+
+                // ✅ Ensure position stays within container
+                newX = Math.max(0, Math.min(container.width - newWidth, newX));
+                newY = Math.max(0, Math.min(container.height - newHeight, newY));
+
+                // ✅ Collision check
+                const isColliding = (x, y, w, h) => {
+                  return container[widgetType]?.some((otherComponent) => {
+                    if (otherComponent.id === componentId) return false; // Ignore self
+                    return (
+                      x < otherComponent.position.x + otherComponent.width &&
+                      x + w > otherComponent.position.x &&
+                      y < otherComponent.position.y + otherComponent.height &&
+                      y + h > otherComponent.position.y
+                    );
+                  });
+                };
+
+                // ❌ If collision detected, find the nearest available space
+                if (isColliding(newX, newY, newWidth, newHeight)) {
+                  console.log("Collision detected! Finding a new position...");
+
+                  let foundSpace = false;
+                  let attemptX = newX,
+                    attemptY = newY;
+                  let step = snapToGrid(10);
+                  let maxAttempts = (container.width * container.height) / (step * step);
+
+                  for (let i = 0; i < maxAttempts && !foundSpace; i++) {
+                    if (attemptX + newWidth <= container.width && !isColliding(attemptX + step, attemptY, newWidth, newHeight)) {
+                      attemptX += step;
+                      foundSpace = true;
+                    } else if (attemptY + newHeight <= container.height && !isColliding(attemptX, attemptY + step, newWidth, newHeight)) {
+                      attemptY += step;
+                      foundSpace = true;
+                    } else if (attemptX - step >= 0 && !isColliding(attemptX - step, attemptY, newWidth, newHeight)) {
+                      attemptX -= step;
+                      foundSpace = true;
+                    } else if (attemptY - step >= 0 && !isColliding(attemptX, attemptY - step, newWidth, newHeight)) {
+                      attemptY -= step;
+                      foundSpace = true;
+                    }
+                  }
+
+                  if (foundSpace) {
+                    newX = attemptX;
+                    newY = attemptY;
+                    console.log("New position found at:", newX, newY);
+                  } else {
+                    console.log("No available space found, keeping original position and size.");
+                    return component;
+                  }
+                }
+
+                // ✅ Update component with new position & size
+                return {
+                  ...component,
+                  position: { x: newX, y: newY },
+                  width: newWidth,
+                  height: newHeight,
+                };
+              }
+              return component;
+            }),
+          };
+        }
+        return container;
+      }),
+    }));
+  };
+
+  const contextValue = useMemo(
+    () => ({
+      data,
+      draggingWidget,
+      startDragging,
+      detectNewContainer,
+      removeWidget,
+      moveWidgetToContainer,
+      updateContainerPosition,
+      updateWidgetPosition,
+      updateContainerSize,
+      updateWidgetSize,
+      snapToGrid,
+      removeContainer,
+      addWidget,
+      updateComponentSize,
+      addPanel,
+      updateComponentPosition,
+      addComponent,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, draggingWidget]
   );
+
+  return <WidgetContext.Provider value={contextValue}>{children}</WidgetContext.Provider>;
 };
 
 export const useWidgetContext = () => useContext(WidgetContext);

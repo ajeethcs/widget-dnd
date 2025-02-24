@@ -11,7 +11,6 @@ const Widget = ({ containerId, widget }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const renderWidget = (widgetType) => {
-    debugger;
     if (widgetType === "table") {
       return <TableComponent />;
     }
